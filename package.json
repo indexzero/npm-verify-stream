@@ -1,0 +1,36 @@
+{
+  "name": "npm-verify-stream",
+  "version": "0.0.0",
+  "description": "A duplex stream for receiving a package tarball, verifying arbitrary checks, and emitting that same tarball on success.",
+  "main": "index.js",
+  "scripts": {
+    "test": "istanbul cover ./node_modules/.bin/_mocha "
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/indexzero/npm-verify-stream"
+  },
+  "keywords": [
+    "npm",
+    "verify",
+    "stream",
+    "npm-analysis"
+  ],
+  "author": "Charlie Robbins <charlie.robbins@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/indexzero/npm-verify-stream/issues"
+  },
+  "homepage": "https://github.com/indexzero/npm-verify-stream",
+  "dependencies": {
+    "duplexify": "~3.4.2",
+    "fstream": "~1.0.7",
+    "tar": "~2.1.1"
+  },
+  "devDependencies": {
+    "istanbul": "~0.3.17",
+    "mocha": "~2.2.5",
+    "mocha-istanbul": "~0.2.0",
+    "stylezero": "~2.2.0"
+  }
+}
