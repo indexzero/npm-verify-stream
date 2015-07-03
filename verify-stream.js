@@ -5,6 +5,7 @@ var fs = require('fs'),
     path = require('path'),
     zlib = require('zlib'),
     extend = require('util')._extend,
+    async = require('async'),
     duplexify = require('duplexify'),
     fstream = require('fstream'),
     tar = require('tar'),
@@ -12,17 +13,25 @@ var fs = require('fs'),
 
 var VerifyStream = module.exports = function VerifyStream(opts) {
   if (!(this instanceof VerifyStream)) { return new VerifyStream(opts); }
+  if (!opts || !opts.checks || !opts.checks.length) {
+    throw new Error('Checks are required to verify an npm package.');
+  }
 
   var self = this;
 
-  this.opts = opts || {};
-  this.opts.package = this.opts.package || {};
-  this.opts.package.log = this.opts.package.log || this.log;
+  this.log = opts.log || function () {};
+  this.read = opts.read || {};
+  this.read.log = this.read.log || (this.read.log !== false && this.log);
+  this.concurrency = opts.concurrency || 5;
+
   this.stream = duplexify();
 
   //
   // When we are piped to then cache that stream
   // to a temporary location on disk.
+  //
+  // Remark: I believe this could be accomplished
+  // with a through2 stream, but not sure.
   //
   this.stream.on('pipe', function (source) {
     self._cache(source);
@@ -48,8 +57,26 @@ var VerifyStream = module.exports = function VerifyStream(opts) {
  * Runs the specified checks against the PackageBuffer
  */
 VerifyStream.prototype.verify = function (files) {
+  var self = this;
   this._building = false;
   console.log('verify');
+  async.mapLimit(
+    this.checks, this.concurrency,
+    function runCheck(check, next) {
+      check(files, next);
+    },
+    function verifyChecks(err) {
+      if (err) {
+        //
+        // TODO: we should emit an error here, but on which
+        // part of the duplex?
+        //
+        return self.cleanup(err);
+      }
+
+      self._flushCache();
+    }
+  )
 };
 
 /* @private function _buildPackage ()
@@ -63,7 +90,7 @@ VerifyStream.prototype._buildPackage = function () {
   }
 
   this._building = true;
-  this.buffer = TarBuffer(this.parser, this.opts.package)
+  this.buffer = TarBuffer(this.parser, this.read)
     //
     // Remark: is this the correct way to handle tar errors?
     // Or should we also emit an error ourselves?
@@ -73,16 +100,20 @@ VerifyStream.prototype._buildPackage = function () {
 };
 
 /*
- * @private function _readCache ()
+ * @private function _flushCache ()
  * Reads the the cached tarball from disk and sets it
  * as the readable portion of the duplex stream.
  */
-VerifyStream.prototype._readCache = function () {
-  if (!this.tmp || !this._cacheComplete) {
+VerifyStream.prototype._flushCache = function () {
+  if (!this.tmp /*|| !this._cacheComplete*/) {
     // TODO: What do we do here?
   }
 
-  this.stream.setReadable(fs.createReadStream(this.tmp));
+  this.readable = fs.createReadStream(this.tmp)
+    .on('error', this._cleanup.bind(this));
+    // .on('end', this._cleanup.bind(this));
+
+  this.stream.setReadable(this.readable);
 };
 
 /*
@@ -91,9 +122,13 @@ VerifyStream.prototype._readCache = function () {
  */
 VerifyStream.prototype._cache = function (source) {
   if (!this.tmp) { this._configure(); }
+  this.log('cache', this.tmp);
   source.pipe(fs.createWriteStream(this.tmp))
-    .on('error', this._cleanup.bind(this))
-    .on('end', this._cleanup.bind(this));
+    .on('error', this._cleanup.bind(this));
+    //
+    // TODO: set _cacheComplete and attempt to emit output
+    //
+    // .on('end', this._readCache.bind(this));
 };
 
 /*
@@ -105,7 +140,7 @@ VerifyStream.prototype._configure = function () {
   var dir = os.tmpdir();
   var now = process.hrtime().join('') + '.tgz';
   this.tmp = path.join(dir, now);
-  console.log('this.tmp', this.tmp);
+  this.log('configure %s', this.tmp);
 };
 
 /*
@@ -114,10 +149,16 @@ VerifyStream.prototype._configure = function () {
  * instance.
  */
 VerifyStream.prototype._cleanup = function (err) {
-  /* TODO: inspection of the error to ignore edge cases */
-  this._building = false;
-  this.log('cleanup %s', this.tmp);
-  fs.unlink(this.tmp, function () {
-    /* TODO: what do we do with these? */
+  //
+  // TODO: inspection of the error to ignore edge cases
+  // TODO: avoid multiple calls to cleanup the same `this.tmp` path.
+  //
+  var self = this;
+  setImmediate(function () {
+    self._building = false;
+    self.log('cleanup %s', self.tmp);
+    fs.unlink(self.tmp, function (err) {
+      /* TODO: what do we do with these errors? */
+    });
   });
 };

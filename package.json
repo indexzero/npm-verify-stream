@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/indexzero/npm-verify-stream",
   "dependencies": {
+    "async": "~1.3.0",
     "concat-stream": "~1.5.0",
     "duplexify": "~3.4.2",
     "fstream": "~1.0.7",

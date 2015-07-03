@@ -8,19 +8,13 @@
 var fs = require('fs');
 var VerifyStream = require('../');
 
-// process.stdin
-//   .pipe(new VerifyStream({
-//     checks: require(process.argv[2]);
-//   }))
-//   .pipe(process.stdout);
-
-process.stdin
+var verifier = process.stdin
   .pipe(new VerifyStream({
-    package: {
-      log: console.log
-    },
-    // checks: require(process.argv[2])
+    // log: console.log,
+    // read: { log: false },
+    checks: ['foo'] // require(process.argv[2])
   }))
-  // .on('data', function () {
-  //   console.dir(arguments);
-  // });
+
+if (process.env.TEST_PIPE) {
+  verifier.pipe(process.stdout);
+}
