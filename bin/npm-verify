@@ -16,7 +16,10 @@ var VerifyStream = require('../');
 
 process.stdin
   .pipe(new VerifyStream({
-    checks: require(process.argv[2]);
+    package: {
+      log: console.log
+    },
+    // checks: require(process.argv[2])
   }))
   // .on('data', function () {
   //   console.dir(arguments);
