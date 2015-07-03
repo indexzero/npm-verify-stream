@@ -1,20 +1,29 @@
 #!/usr/bin/env node
 
-//
-// Example usage:
-// cat tarball.tgz | ./npm-verify checks.js | worked.tgz
-//
-
 var fs = require('fs');
 var VerifyStream = require('../');
+var minimist = require('minimist');
 
-var verifier = process.stdin
-  .pipe(new VerifyStream({
-    // log: console.log,
-    // read: { log: false },
-    checks: ['foo'] // require(process.argv[2])
-  }))
+var argv = minimist(process.argv.slice(2), {
+  string: ['in', 'out', 'checks'],
+  boolean: ['log'],
+  alias: {
+    in: 'i',
+    out: 'o',
+    checks: 'c',
+    log: 'l'
+  }
+});
 
-if (process.env.TEST_PIPE) {
-  verifier.pipe(process.stdout);
+var input = argv.in
+  ? fs.createReadStream(argv.in)
+  : process.stdin
+
+var verifier = input.pipe(new VerifyStream({
+  log: argv.log && console.log,
+  checks: ['TODO: replace this'] // require(argv.checks)
+}));
+
+if (argv.out) {
+  verifier.pipe(fs.createWriteStream(argv.out));
 }
