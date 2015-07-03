@@ -1,0 +1,23 @@
+#!/usr/bin/env node
+
+//
+// Example usage:
+// cat tarball.tgz | ./npm-verify checks.js | worked.tgz
+//
+
+var fs = require('fs');
+var VerifyStream = require('../');
+
+// process.stdin
+//   .pipe(new VerifyStream({
+//     checks: require(process.argv[2]);
+//   }))
+//   .pipe(process.stdout);
+
+process.stdin
+  .pipe(new VerifyStream({
+    checks: require(process.argv[2]);
+  }))
+  // .on('data', function () {
+  //   console.dir(arguments);
+  // });
