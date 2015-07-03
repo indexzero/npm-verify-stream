@@ -110,8 +110,8 @@ VerifyStream.prototype._flushCache = function () {
   }
 
   this.readable = fs.createReadStream(this.tmp)
-    .on('error', this._cleanup.bind(this));
-    // .on('end', this._cleanup.bind(this));
+    .on('error', this._cleanup.bind(this))
+    .on('end', this._cleanup.bind(this));
 
   this.stream.setReadable(this.readable);
 };
