@@ -127,6 +127,7 @@ VerifyStream.prototype._cache = function (source) {
     .on('error', this._cleanup.bind(this));
     //
     // TODO: set _cacheComplete and attempt to emit output
+    // Remark: is this a race we care about?
     //
     // .on('end', this._readCache.bind(this));
 };
@@ -151,14 +152,26 @@ VerifyStream.prototype._configure = function () {
 VerifyStream.prototype._cleanup = function (err) {
   //
   // TODO: inspection of the error to ignore edge cases
-  // TODO: avoid multiple calls to cleanup the same `this.tmp` path.
   //
   var self = this;
+  self._building = false;
+
+  //
+  // Do not clean if we are currently doing so or
+  // we do not have a tmp tarball file.
+  //
+  if (this._cleaning || !this.tmp) { return; }
+  this._cleaning = true;
+
   setImmediate(function () {
-    self._building = false;
     self.log('cleanup %s', self.tmp);
     fs.unlink(self.tmp, function (err) {
-      /* TODO: what do we do with these errors? */
+      self._cleaning = false;
+      //
+      // TODO: what do we do with these errors?
+      //
+      if (err) { return; }
+      self.tmp = null;
     });
   });
 };
