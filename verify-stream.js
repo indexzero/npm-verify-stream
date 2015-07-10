@@ -76,7 +76,7 @@ VerifyStream.prototype.verify = function (files) {
 
       self._flushCache();
     }
-  )
+  );
 };
 
 /* @private function _buildPackage ()
@@ -90,7 +90,7 @@ VerifyStream.prototype._buildPackage = function () {
   }
 
   this._building = true;
-  this.buffer = TarBuffer(this.parser, this.read)
+  this.buffer = new TarBuffer(this.parser, this.read)
     //
     // Remark: is this the correct way to handle tar errors?
     // Or should we also emit an error ourselves?
@@ -107,6 +107,7 @@ VerifyStream.prototype._buildPackage = function () {
 VerifyStream.prototype._flushCache = function () {
   if (!this.tmp /*|| !this._cacheComplete*/) {
     // TODO: What do we do here?
+    throw new Error('What is wrong?');
   }
 
   this.readable = fs.createReadStream(this.tmp)

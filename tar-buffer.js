@@ -2,7 +2,7 @@
 
 var events = require('events'),
     util = require('util'),
-    concat = require('concat-stream')
+    concat = require('concat-stream');
 
 /*
  * function TarBuffer (parser, opts)
@@ -19,7 +19,6 @@ var TarBuffer = module.exports = function TarBuffer(parser, opts) {
   //
   opts = opts || {};
   this.log = opts.log || function () {};
-  this.exts = opts.exts || ['js', 'json', 'md'];
 
   //
   // Remark: what's the best data structure for nested files?
