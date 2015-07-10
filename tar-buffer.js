@@ -27,8 +27,7 @@ var TarBuffer = module.exports = function TarBuffer(parser, opts) {
   self.files = {};
   parser.on('entry', function (e) {
     if (self.files[e.path]) {
-      self.log('duplicate entry', e.path);
-      return;
+      return self.log('duplicate entry', e.path);
     }
 
     self.log('entry', e.props);

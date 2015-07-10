@@ -21,7 +21,12 @@ var input = argv.in
 
 var verifier = input.pipe(new VerifyStream({
   log: argv.log && console.log,
-  checks: ['TODO: replace this'] // require(argv.checks)
+  checks: [function noop(pkg, next) {
+    //
+    // TODO: Require a set of checks.
+    //
+    next();
+  }]
 }));
 
 if (argv.out) {

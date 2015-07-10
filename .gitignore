@@ -26,4 +26,8 @@ build/Release
 # https://www.npmjs.org/doc/misc/npm-faq.html#should-i-check-my-node_modules-folder-into-git
 node_modules
 
+.DS_Store
 *.tgz
+!test/fixtures/npm-verify-stream-0.0.0.tgz
+test/output/*
+!test/output/.gitkeep

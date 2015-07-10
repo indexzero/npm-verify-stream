@@ -23,6 +23,7 @@ var VerifyStream = module.exports = function VerifyStream(opts) {
   this.read = opts.read || {};
   this.read.log = this.read.log || (this.read.log !== false && this.log);
   this.concurrency = opts.concurrency || 5;
+  this.checks = opts.checks;
 
   this.stream = duplexify();
 
@@ -59,7 +60,6 @@ var VerifyStream = module.exports = function VerifyStream(opts) {
 VerifyStream.prototype.verify = function (files) {
   var self = this;
   this._building = false;
-  console.log('verify');
   async.mapLimit(
     this.checks, this.concurrency,
     function runCheck(check, next) {
