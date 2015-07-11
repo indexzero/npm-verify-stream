@@ -14,17 +14,18 @@ var assert = module.exports = require('assert');
  * Asserts that the files for `input` and `output` exist
  * and are equal in bytes.
  */
-assert.wasVerified = function wasVerified(input, output) {
+assert.wasVerified = function wasVerified(input, output, done) {
   return function checkVerified() {
-    console.error('wat');
     async.parallel({
       input: async.apply(fs.stat, input),
       output: async.apply(fs.stat, output)
     }, function (err, stats) {
       if (err) { throw err; }
 
-      console.dir(stats.input);
-      console.dir(stats.output);
+      assert(typeof stats.input, 'object');
+      assert(typeof stats.output, 'object');
+      assert.equal(stats.input.size, stats.output.size);
+      done();
     });
   };
 };

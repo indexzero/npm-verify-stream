@@ -13,22 +13,24 @@ describe('npm-verify-stream simple', function () {
       helpers.cleanOutput(done);
     });
 
-    it('no-op', function (done) {
+    it('should exist against a no-op check', function (done) {
       var input = path.join(dirs.fixtures, 'npm-verify-stream-0.0.0.tgz');
       var output = path.join(dirs.output, 'no-op-test.tgz');
+      var wasChecked;
 
       fs.createReadStream(input)
         .pipe(new VerifyStream({
           log: process.env.DEBUG && console.log,
           checks: [function noop(pkg, next) {
-            //
-            // TODO: Require a set of checks.
-            //
+            wasChecked = true;
             next();
           }]
         }))
         .pipe(fs.createWriteStream(output))
-        .on('end', assert.wasVerified(input, output))
+        .on('close', assert.wasVerified(input, output, function () {
+          assert.equal(wasChecked, true);
+          done();
+        }));
     });
   });
 });
