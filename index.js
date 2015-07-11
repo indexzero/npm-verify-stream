@@ -1,6 +1,4 @@
 'use strict';
 
-/*
- * TODO: Probably want to do other things here..
- */
 module.exports = require('./verify-stream');
+module.exports.TarBuffer = require('./tar-buffer');
