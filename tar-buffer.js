@@ -14,8 +14,7 @@ var TarBuffer = module.exports = function TarBuffer(parser, opts) {
   events.EventEmitter.call(this);
 
   //
-  // TODO: `opts.exts` should probably be modeled through
-  // `fstream-ignore`.
+  // TODO: Need to support ignore options similar to `fstream-ignore`.
   //
   opts = opts || {};
   this.log = opts.log || function () {};

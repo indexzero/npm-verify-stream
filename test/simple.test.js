@@ -7,7 +7,34 @@ var path = require('path'),
     helpers = require('./helpers'),
     dirs = helpers.dirs;
 
+//
+// Simple no-op checks.
+//
+var checks = [function noop(check, next) { next(); }];
+
 describe('npm-verify-stream simple', function () {
+  describe('module', function () {
+    it('exposes correct functions', function () {
+      assert.equal(typeof VerifyStream, 'function');
+      assert.equal(typeof VerifyStream.TarBuffer, 'function');
+    });
+  });
+
+  describe('VerifyStream', function () {
+    it('does not require "new"', function () {
+      assert.isVerifyStream(VerifyStream({ checks: checks }), checks);
+    });
+
+    it('instance has the correct state', function () {
+      assert.isVerifyStream(new VerifyStream({ checks: checks }), checks);
+    });
+
+    it('requires checks', function () {
+      assert.throws(function () { new VerifyStream() });
+      assert.throws(function () { new VerifyStream({ checks: [] }) });
+    });
+  });
+
   describe('output tarball', function () {
     beforeEach(function (done) {
       helpers.cleanOutput(done);

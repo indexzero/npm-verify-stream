@@ -10,6 +10,26 @@ var fs = require('fs'),
 var assert = module.exports = require('assert');
 
 /*
+ * function isVerifyStream(stream, checks)
+ * Asserts that the stream is a VerifyStream for
+ * the given checks
+ */
+assert.isVerifyStream = function (stream, checks) {
+  assert(stream.__verifier);
+
+  var v = stream.__verifier;
+  assert(v.log);
+  assert(v.read);
+  assert(v.writable);
+  assert(v.parser);
+  assert(v.buffer);
+
+  assert.equal(v.stream, stream);
+  assert.equal(v.concurrency, 5);
+  assert.equal(v.checks, checks);
+};
+
+/*
  * function wasVerified(input, output)
  * Asserts that the files for `input` and `output` exist
  * and are equal in bytes.

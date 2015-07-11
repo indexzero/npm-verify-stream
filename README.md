@@ -25,7 +25,7 @@ var verifier = new VerifyStream({
 // Put the tarball somewhere (like npm) ONLY if it passes
 // all of the checks.
 //
-fs.createReadStream('npm-verify-stream-2.0.0.tgz')
+fs.createReadStream('npm-verify-stream-0.0.0.tgz')
   .pipe(verifier)
   .pipe(request.post('https://registry.nodejitsu.com/npm-verify-stream'));
 ```
@@ -35,9 +35,31 @@ A "check" is a function that accepts a fully-read npm package and responds with 
 
 **example-check.js**
 ``` js
-module.exports = function (package) {
+module.exports = function (package, done) {
   //
   // Really complicated static analysis stuff and whatnot goes here.
   //
 };
 ```
+
+### API
+
+#### Options
+
+- `checks`: (required) Check functions that must pass to consider the package verified.
+- `concurrency`: (default: 5) Number of concurrent checks to run.
+- `log`: (optional) Log function to use. Expects `console.log` API.
+- `read`: (optional) Options to pass to the `TarBuffer`.
+
+#### Events
+- `error`: as with any stream these will be emitted if the readable or writable end of the duplex stream has errored. It will also be emitted if there is an error writing the tarball to the disk cache during the verification process or if the verification fails.
+- `cleanup`: emitted when the cached tarball is removed.
+``` js
+verifier.on('cleanup', function (file, err) {
+  // If there was an error removing from your cache
+  // it will be here. ENOENT errors are ignored.
+});
+```
+
+##### Author: [Charlie Robbins](https://github.com/indexzero)
+##### LICENSE: MIT

@@ -26,6 +26,7 @@ var VerifyStream = module.exports = function VerifyStream(opts) {
   this.checks = opts.checks;
 
   this.stream = duplexify();
+  this.stream.__verifier = this;
 
   //
   // When we are piped to then cache that stream
@@ -38,15 +39,23 @@ var VerifyStream = module.exports = function VerifyStream(opts) {
     self._cache(source);
   });
 
-  this.stream.on('error', this._cleanup.bind(this));
-
   //
   // Setup our writable stream for parsing gzipped
   // tarball data as it is written to us.
   //
-  this.writable = zlib.Unzip();
+  this._building = true;
+  this.writable = zlib.Unzip()
+    .on('error', this._cleanup.bind(this));
+
+  //
+  // Do not listen for errors on our tar parser because
+  // those errors will be emitted by our TarBuffer.
+  //
   this.parser = tar.Parse();
-  this._buildPackage();
+  this.buffer = new TarBuffer(this.parser, this.read)
+    .on('error', this._cleanup.bind(this))
+    .on('end', this.verify.bind(this));
+
   this.writable.pipe(this.parser);
   this.stream.setWritable(this.writable);
 
@@ -66,37 +75,10 @@ VerifyStream.prototype.verify = function (files) {
       check(files, next);
     },
     function verifyChecks(err) {
-      if (err) {
-        //
-        // TODO: we should emit an error here, but on which
-        // part of the duplex?
-        //
-        return self.cleanup(err);
-      }
-
+      if (err) { return self._cleanup(err); }
       self._flushCache();
     }
   );
-};
-
-/* @private function _buildPackage ()
- * Creates a tar.Parse stream and listens to the extra
- * events necessary to build the package
- */
-VerifyStream.prototype._buildPackage = function () {
-  if (this._building) {
-    // TODO: throwing an error here is awful
-    throw new Error('Cannot build once buffering a package.');
-  }
-
-  this._building = true;
-  this.buffer = new TarBuffer(this.parser, this.read)
-    //
-    // Remark: is this the correct way to handle tar errors?
-    // Or should we also emit an error ourselves?
-    //
-    .on('error', this._cleanup.bind(this))
-    .on('end', this.verify.bind(this));
 };
 
 /*
@@ -105,7 +87,7 @@ VerifyStream.prototype._buildPackage = function () {
  * as the readable portion of the duplex stream.
  */
 VerifyStream.prototype._flushCache = function () {
-  if (!this.tmp /*|| !this._cacheComplete*/) {
+  if (!this.tmp) {
     // TODO: What do we do here?
     throw new Error('What is wrong?');
   }
@@ -127,10 +109,10 @@ VerifyStream.prototype._cache = function (source) {
   source.pipe(fs.createWriteStream(this.tmp))
     .on('error', this._cleanup.bind(this));
     //
-    // TODO: set _cacheComplete and attempt to emit output
-    // Remark: is this a race we care about?
+    // Remark: is set _cacheComplete and attempting to emit output
+    // handling a race we care about?
     //
-    // .on('end', this._readCache.bind(this));
+    // .on('end', this._flushCache.bind(this));
 };
 
 /*
@@ -151,9 +133,6 @@ VerifyStream.prototype._configure = function () {
  * instance.
  */
 VerifyStream.prototype._cleanup = function (err) {
-  //
-  // TODO: inspection of the error to ignore edge cases
-  //
   var self = this;
   self._building = false;
 
@@ -164,15 +143,22 @@ VerifyStream.prototype._cleanup = function (err) {
   if (this._cleaning || !this.tmp) { return; }
   this._cleaning = true;
 
+  //
+  // Emit an error on our stream instance if we
+  // are passed one here.
+  // TODO: inspection of the error to ignore edge cases
+  //
+  if (err) { this.stream.emit('error', err); }
+
   setImmediate(function () {
     self.log('cleanup %s', self.tmp);
     fs.unlink(self.tmp, function (err) {
+      var errState;
       self._cleaning = false;
-      //
-      // TODO: what do we do with these errors?
-      //
-      if (err) { return; }
+
+      if (err && err.code !== 'ENOENT') { errState = err; }
       self.tmp = null;
+      self.stream.emit('cleanup', self.tmp, errState);
     });
   });
 };
