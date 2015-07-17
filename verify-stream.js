@@ -23,6 +23,7 @@ var VerifyStream = module.exports = function VerifyStream(opts) {
   this.read = opts.read || {};
   this.read.log = this.read.log || (this.read.log !== false && this.log);
   this.concurrency = opts.concurrency || 5;
+  this.before = opts.before;
   this.checks = opts.checks;
 
   this.stream = duplexify();
@@ -44,8 +45,13 @@ var VerifyStream = module.exports = function VerifyStream(opts) {
   // tarball data as it is written to us.
   //
   this._building = true;
-  this.writable = zlib.Unzip()
+  this.gunzip = zlib.Unzip()
     .on('error', this._cleanup.bind(this));
+
+  this.writable = this.before || this.gunzip;
+  if (this.before) {
+    this.before.pipe(this.gunzip);
+  }
 
   //
   // Do not listen for errors on our tar parser because
