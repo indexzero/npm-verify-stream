@@ -62,7 +62,8 @@ var VerifyStream = module.exports = function VerifyStream(opts) {
   if (this.before) {
     this.gunzip.pipe(this.parser);
     this.before.pipe(this.gunzip);
-  } else {
+  }
+  else {
     this.writable.pipe(this.parser);
   }
 

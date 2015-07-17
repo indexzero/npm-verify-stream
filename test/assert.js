@@ -45,6 +45,7 @@ assert.wasVerified = function wasVerified(input, output, done) {
       assert(typeof stats.input, 'object');
       assert(typeof stats.output, 'object');
       assert.equal(stats.input.size, stats.output.size);
+
       done();
     });
   };
