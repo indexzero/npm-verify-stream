@@ -24,6 +24,7 @@ var VerifyStream = module.exports = function VerifyStream(opts) {
   this.concurrency = opts.concurrency || 5;
   this.before = opts.before;
   this.checks = opts.checks;
+  this.cleanup = opts.cleanup;
 
   this.stream = duplexify();
   this.stream.__verifier = this;
