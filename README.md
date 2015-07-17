@@ -50,6 +50,8 @@ module.exports = function (package, done) {
 - `concurrency`: (default: 5) Number of concurrent checks to run.
 - `log`: (optional) Log function to use. Expects `console.log` API.
 - `read`: (optional) Options to pass to the `TarBuffer`.
+- `before`: (optional) Stream to pipe to BEFORE piping to the `zlib.Unzip` and `tar.Parse` streams.
+- `cleanup`: (optional) If *explicitly* set to `false` then temporary files will not be cleaned up. Useful for debugging.
 
 #### Events
 - `error`: as with any stream these will be emitted if the readable or writable end of the duplex stream has errored. It will also be emitted if there is an error writing the tarball to the disk cache during the verification process or if the verification fails.

@@ -18,12 +18,13 @@ var VerifyStream = module.exports = function VerifyStream(opts) {
   }
 
   var self = this;
-
   this.log = opts.log || function () {};
   this.read = opts.read || {};
   this.read.log = this.read.log || (this.read.log !== false && this.log);
   this.concurrency = opts.concurrency || 5;
+  this.before = opts.before;
   this.checks = opts.checks;
+  this.cleanup = opts.cleanup;
 
   this.stream = duplexify();
   this.stream.__verifier = this;
@@ -44,8 +45,10 @@ var VerifyStream = module.exports = function VerifyStream(opts) {
   // tarball data as it is written to us.
   //
   this._building = true;
-  this.writable = zlib.Unzip()
+  this.gunzip = zlib.Unzip()
     .on('error', this._cleanup.bind(this));
+
+  this.writable = this.before || this.gunzip;
 
   //
   // Do not listen for errors on our tar parser because
@@ -56,7 +59,14 @@ var VerifyStream = module.exports = function VerifyStream(opts) {
     .on('error', this._cleanup.bind(this))
     .on('end', this.verify.bind(this));
 
-  this.writable.pipe(this.parser);
+  if (this.before) {
+    this.gunzip.pipe(this.parser);
+    this.before.pipe(this.gunzip);
+  }
+  else {
+    this.writable.pipe(this.parser);
+  }
+
   this.stream.setWritable(this.writable);
 
   return this.stream;
@@ -152,6 +162,10 @@ VerifyStream.prototype._cleanup = function (err) {
 
   setImmediate(function () {
     self.log('cleanup %s', self.tmp);
+    if (self.cleanup === false) {
+      return self.log('skip cleanup %s', self.tmp);
+    }
+
     fs.unlink(self.tmp, function (err) {
       var errState;
       self._cleaning = false;
