@@ -9,7 +9,7 @@ var fs = require('fs'),
     duplexify = require('duplexify'),
     fstream = require('fstream'),
     tar = require('tar'),
-    TarBuffer = require('./tar-buffer');
+    TarBuffer = require('tar-buffer');
 
 var VerifyStream = module.exports = function VerifyStream(opts) {
   if (!(this instanceof VerifyStream)) { return new VerifyStream(opts); }

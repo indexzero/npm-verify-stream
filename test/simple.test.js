@@ -17,7 +17,6 @@ describe('npm-verify-stream simple', function () {
   describe('module', function () {
     it('exposes correct functions', function () {
       assert.equal(typeof VerifyStream, 'function');
-      assert.equal(typeof VerifyStream.TarBuffer, 'function');
     });
   });
 

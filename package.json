@@ -28,7 +28,8 @@
     "concat-stream": "~1.5.0",
     "duplexify": "~3.4.2",
     "fstream": "~1.0.7",
-    "tar": "~2.1.1"
+    "tar": "~2.1.1",
+    "tar-buffer": "^1.0.0"
   },
   "devDependencies": {
     "istanbul": "~0.3.17",
