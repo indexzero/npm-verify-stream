@@ -1,6 +1,6 @@
 {
   "name": "npm-verify-stream",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "A duplex stream for receiving a package tarball, verifying arbitrary checks, and emitting that same tarball on success.",
   "main": "index.js",
   "scripts": {
