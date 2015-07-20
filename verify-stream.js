@@ -82,7 +82,7 @@ VerifyStream.prototype.verify = function (files) {
   async.mapLimit(
     this.checks, this.concurrency,
     function runCheck(check, next) {
-      check(files, next);
+      check(self.buffer, next);
     },
     function verifyChecks(err) {
       if (err) { return self._cleanup(err); }
