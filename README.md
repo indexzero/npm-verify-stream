@@ -31,18 +31,31 @@ fs.createReadStream('npm-verify-stream-0.0.0.tgz')
 ```
 
 ## Checks
-A "check" is a function that accepts a fully-read npm package and responds with either no error or an error indicating how the package violated the check.
+A "check" is a function that accepts an [npm-package-buffer][npm-package-buffer] and responds with either no error or an error indicating how the package violated the check.
 
 **example-check.js**
 ``` js
-module.exports = function (package, done) {
+module.exports = function (version, done) {
   //
-  // Really complicated static analysis stuff and whatnot goes here.
+  // `version.package` is a fully JSON parsed the package.json.
   //
+  console.dir(version.package);
+
+  //
+  // `version.files` is all files read into memory
+  //
+  console.dir(version.files);
+
+  //
+  // Respond when done
+  //
+  done();
 };
 ```
 
 ### API
+
+See also: [`npm-package-buffer`][npm-package-buffer], [`tar-buffer`](https://github.com/indexzero/tar-buffer).
 
 #### Options
 
@@ -65,3 +78,5 @@ verifier.on('cleanup', function (file, err) {
 
 ##### Author: [Charlie Robbins](https://github.com/indexzero)
 ##### LICENSE: MIT
+
+[npm-package-buffer]: https://github.com/indexzero/npm-package-buffer

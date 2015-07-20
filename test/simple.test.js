@@ -69,7 +69,15 @@ describe('npm-verify-stream simple', function () {
       var verifier = new VerifyStream({
         log: process.env.DEBUG && console.log,
         cleanup: false,
-        checks: [function noop(pkg, next) {
+        checks: [function noop(ver, next) {
+          assert.ok(!!ver);
+          assert.ok(!!ver.package);
+          assert.ok(!!ver.files);
+
+          assert.equal(typeof ver, 'object');
+          assert.equal(typeof ver.package, 'object');
+          assert.equal(typeof ver.files, 'object');
+
           wasChecked = true;
           next();
         }]
