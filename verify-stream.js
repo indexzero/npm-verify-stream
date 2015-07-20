@@ -9,7 +9,7 @@ var fs = require('fs'),
     duplexify = require('duplexify'),
     fstream = require('fstream'),
     tar = require('tar'),
-    TarBuffer = require('tar-buffer');
+    PackageBuffer = require('npm-package-buffer');
 
 var VerifyStream = module.exports = function VerifyStream(opts) {
   if (!(this instanceof VerifyStream)) { return new VerifyStream(opts); }
@@ -52,10 +52,10 @@ var VerifyStream = module.exports = function VerifyStream(opts) {
 
   //
   // Do not listen for errors on our tar parser because
-  // those errors will be emitted by our TarBuffer.
+  // those errors will be emitted by our PackageBuffer.
   //
   this.parser = tar.Parse();
-  this.buffer = new TarBuffer(this.parser, this.read)
+  this.buffer = new PackageBuffer(this.parser, this.read)
     .on('error', this._cleanup.bind(this))
     .on('end', this.verify.bind(this));
 
