@@ -76,11 +76,15 @@ var VerifyStream = module.exports = function VerifyStream(opts) {
  * function verify ()
  * Runs the specified checks against the PackageBuffer
  */
-VerifyStream.prototype.verify = function (files) {
+VerifyStream.prototype.verify = function () {
   var self = this;
+  var checks = typeof this.checks === 'function'
+    ? this.checks(self.buffer)
+    : this.checks;
+
   this._building = false;
   async.mapLimit(
-    this.checks, this.concurrency,
+    checks, this.concurrency,
     function runCheck(check, next) {
       check(self.buffer, next);
     },
