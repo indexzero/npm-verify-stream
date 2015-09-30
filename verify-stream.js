@@ -30,17 +30,6 @@ var VerifyStream = module.exports = function VerifyStream(opts) {
   this.stream.__verifier = this;
 
   //
-  // When we are piped to then cache that stream
-  // to a temporary location on disk.
-  //
-  // Remark: I believe this could be accomplished
-  // with a through2 stream, but not sure.
-  //
-  this.stream.on('pipe', function (source) {
-    self._cache(source);
-  });
-
-  //
   // Setup our writable stream for parsing gzipped
   // tarball data as it is written to us.
   //
@@ -48,7 +37,16 @@ var VerifyStream = module.exports = function VerifyStream(opts) {
   this.gunzip = zlib.Unzip()
     .on('error', this._cleanup.bind(this));
 
-  this.writable = this.before || this.gunzip;
+  //
+  // We first cache it to disk completely, then begin to perform operations by
+  // reading a new file from disk
+  //
+  this.writable = this._cacheStream();
+
+  //
+  // The next stream to be written to after we cache the file on disk
+  //
+  this.next = this.before || this.gunzip;
 
   //
   // Do not listen for errors on our tar parser because
@@ -61,10 +59,11 @@ var VerifyStream = module.exports = function VerifyStream(opts) {
 
   if (this.before) {
     this.gunzip.pipe(this.parser);
-    this.before.pipe(this.gunzip);
+    // next === before
+    this.next.pipe(this.gunzip);
   }
   else {
-    this.writable.pipe(this.parser);
+    this.next.pipe(this.parser);
   }
 
   this.stream.setWritable(this.writable);
@@ -114,19 +113,31 @@ VerifyStream.prototype._flushCache = function () {
 };
 
 /*
- * @private function _cache (stream)
+ * @private function _cache ()
  * Caches the stream to a temporary file in a temporary directory
  */
-VerifyStream.prototype._cache = function (source) {
+VerifyStream.prototype._cacheStream = function () {
   if (!this.tmp) { this._configure(); }
   this.log('cache', this.tmp);
-  source.pipe(fs.createWriteStream(this.tmp))
-    .on('error', this._cleanup.bind(this));
+
+  return fs.createWriteStream(this.tmp)
+    .on('error', this._cleanup.bind(this))
+    .on('finish', this._process.bind(this));
     //
     // Remark: is set _cacheComplete and attempting to emit output
     // handling a race we care about?
     //
     // .on('end', this._flushCache.bind(this));
+};
+
+/**
+ * @private function _process ()
+ * Read tarball off disk in order to begin processing with a clean copy
+ */
+VerifyStream.prototype._process = function () {
+  fs.createReadStream(this.tmp)
+    .on('error', this._cleanup.bind(this))
+    .pipe(this.next);
 };
 
 /*
